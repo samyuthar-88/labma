@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Spice Garden Restaurant</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: #fffaf5;
+            color: #333;
+        }
+
+        /* ================= NAVBAR ================= */
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            padding: 18px 7%;
+
+            background: #171717;
+        }
+
+        .logo {
+            color: #f4a261;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 22px;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+
+        nav a:hover {
+            color: #f4a261;
+        }
+
+        /* ================= HERO ================= */
+
+        .hero {
+            height: 90vh;
+
+            display: flex;
+            align-items: center;
+
+            padding: 50px 8%;
+
+            color: white;
+
+            background:
+                linear-gradient(rgba(0,0,0,.65), rgba(0,0,0,.65)),
+                url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4")
+                center/cover;
+        }
+
+        .hero-content {
+            max-width: 650px;
+            animation: slideIn 1.2s ease;
+        }
+
+        .hero h1 {
+            font-size: 62px;
+            line-height: 1.1;
+        }
+
+        .hero h1 span {
+            color: #f4a261;
+        }
+
+        .hero p {
+            font-size: 19px;
+            line-height: 1.7;
+            margin: 25px 0;
+        }
+
+        .btn {
+            display: inline-block;
+
+            padding: 14px 27px;
+
+            background: #e76f51;
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 30px;
+
+            margin-right: 10px;
+
+            transition: .3s;
+        }
+
+        .btn:hover {
+            background: #d85c3e;
+            transform: translateY(-3px);
+        }
+
+        .outline {
+            background: transparent;
+            border: 2px solid white;
+        }
+
+        /* ================= COMMON ================= */
+
+        section {
+            padding: 80px 8%;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 40px;
+            margin-bottom: 45px;
+        }
+
+        .section-title span {
+            color: #e76f51;
+        }
+
+        /* ================= ABOUT ================= */
+
+        .about {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+        }
+
+        .about-img {
+            width: 50%;
+        }
+
+        .about-img img {
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px #ccc;
+        }
+
+        .about-text {
+            width: 50%;
+        }
+
+        .about-text h2 {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+
+        .about-text p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .features {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .feature {
+            background: #fff0e6;
+            padding: 15px;
+            border-radius: 10px;
+            color: #e76f51;
+            font-weight: bold;
+        }
+
+        /* ================= MENU ================= */
+
+        #menu {
+            background: #f8eee4;
+        }
+
+        .category {
+            margin-bottom: 60px;
+        }
+
+        .category h3 {
+            text-align: center;
+            font-size: 28px;
+            color: #e76f51;
+            margin-bottom: 25px;
+        }
+
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+
+        .food-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px #ddd;
+            transition: .3s;
+        }
+
+        .food-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .food-card img {
+            width: 100%;
+            height: 190px;
+            object-fit: cover;
+        }
+
+        .food-info {
+            padding: 18px;
+        }
+
+        .food-info h4 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .food-info p {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .price {
+            color: #e76f51;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* ================= OFFER ================= */
+
+        .offer {
+            margin: 70px 8%;
+
+            text-align: center;
+
+            padding: 60px;
+
+            color: white;
+
+            border-radius: 25px;
+
+            background:
+                linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)),
+                url("https://images.unsplash.com/photo-1515003197210-e0cd71810b5f")
+                center/cover;
+        }
+
+        .offer h2 {
+            font-size: 42px;
+            margin-bottom: 15px;
+        }
+
+        .offer p {
+            font-size: 20px;
+            margin-bottom: 25px;
+        }
+
+        /* ================= GALLERY ================= */
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+
+        .gallery img {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            border-radius: 15px;
+            transition: .4s;
+        }
+
+        .gallery img:hover {
+            transform: scale(1.05);
+        }
+
+        /* ================= CHEFS ================= */
+
+        #chefs {
+            background: #f8eee4;
+        }
+
+        .chef-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .chef {
+            background: white;
+            text-align: center;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px #ddd;
+        }
+
+        .chef img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .chef h3 {
+            margin: 15px;
+        }
+
+        .chef p {
+            color: #777;
+            padding-bottom: 20px;
+        }
+
+        /* ================= RESERVATION ================= */
+
+        .reservation {
+            max-width: 750px;
+            margin: auto;
+        }
+
+        .reservation form {
+            display: grid;
+            gap: 15px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 15px;
+
+            border: 1px solid #ddd;
+            border-radius: 8px;
+
+            font-size: 16px;
+        }
+
+        textarea {
+            height: 120px;
+        }
+
+        button {
+            padding: 15px;
+
+            background: #e76f51;
+            color: white;
+
+            border: none;
+            border-radius: 8px;
+
+            font-size: 17px;
+            cursor: pointer;
+
+            transition: .3s;
+        }
+
+        button:hover {
+            background: #d85c3e;
+        }
+
+        /* ================= CONTACT ================= */
+
+        #contact {
+            background: #f8eee4;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .contact-card {
+            background: white;
+            padding: 35px;
+            text-align: center;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px #ddd;
+        }
+
+        .contact-card .icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        .contact-card h3 {
+            color: #e76f51;
+            margin-bottom: 10px;
+        }
+
+        .contact-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* ================= FOOTER ================= */
+
+        footer {
+            background: #171717;
+            color: white;
+
+            text-align: center;
+
+            padding: 45px 20px;
+        }
+
+        footer h2 {
+            color: #f4a261;
+            margin-bottom: 15px;
+        }
+
+        footer p {
+            color: #bbb;
+            margin: 8px;
+        }
+
+        .social {
+            margin: 20px;
+            font-size: 25px;
+        }
+
+        /* ================= ANIMATION ================= */
+
+        @keyframes slideIn {
+
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+        }
+
+        /* ================= MOBILE ================= */
+
+        @media(max-width: 900px) {
+
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            nav {
+                text-align: center;
+            }
+
+            nav a {
+                display: inline-block;
+                margin: 5px;
+            }
+
+            .hero {
+                text-align: center;
+            }
+
+            .hero h1 {
+                font-size: 45px;
+            }
+
+            .about {
+                flex-direction: column;
+            }
+
+            .about-img,
+            .about-text {
+                width: 100%;
+            }
+
+            .food-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .gallery {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chef-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media(max-width: 550px) {
+
+            .food-grid,
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 38px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .offer {
+                margin: 30px 5%;
+                padding: 40px 15px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ================= NAVBAR ================= -->
+
+<header>
+
+    <div class="logo">
+        🍽️ Spice Garden
+    </div>
+
+    <nav>
+
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#menu">Menu</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#chefs">Chefs</a>
+        <a href="#reservation">Reservation</a>
+        <a href="#contact">Contact</a>
+
+    </nav>
+
+</header>
+
+
+<!-- ================= HOME ================= -->
+
+<section class="hero" id="home">
+
+    <div class="hero-content">
+
+        <h1>
+            Taste the
+            <span>Magic</span>
+            in Every Bite
+        </h1>
+
+        <p>
+            Welcome to Spice Garden Restaurant.
+            Enjoy delicious food, beautiful ambience
+            and unforgettable dining experiences.
+        </p>
+
+        <a href="#menu" class="btn">
+            Explore Menu
+        </a>
+
+        <a href="#reservation" class="btn outline">
+            Book a Table
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- ================= ABOUT ================= -->
+
+<section id="about">
+
+    <div class="about">
+
+        <div class="about-img">
+
+            <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4">
+
+        </div>
+
+        <div class="about-text">
+
+            <h2>
+                About <span>Spice Garden</span>
+            </h2>
+
+            <p>
+                Spice Garden is a family-friendly restaurant
+                serving delicious Indian and international
+                dishes.
+            </p>
+
+            <p>
+                Our professional chefs use fresh ingredients
+                and traditional recipes to create delicious
+                meals for our customers.
+            </p>
+
+            <p>
+                Whether it is a family dinner, birthday,
+                business meeting or celebration, Spice Garden
+                is the perfect place.
+            </p>
+
+            <div class="features">
+
+                <div class="feature">👨‍🍳 Expert Chefs</div>
+
+                <div class="feature">🥗 Fresh Food</div>
+
+                <div class="feature">❤️ Best Service</div>
+
+                <div class="feature">⭐ 5 Star Taste</div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= MENU ================= -->
+
+<section id="menu">
+
+    <h2 class="section-title">
+        Our <span>Delicious Menu</span>
+    </h2>
+
+
+    <!-- BIRYANI -->
+
+    <div class="category">
+
+        <h3>🍗 Biryani & Main Course</h3>
+
+        <div class="food-grid">
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1563379091339-03246963d51a">
+
+                <div class="food-info">
+
+                    <h4>Chicken Biryani</h4>
+
+                    <p>
+                        Aromatic basmati rice with spicy chicken.
+                    </p>
+
+                    <div class="price">₹220</div>
+
+                </div>
+
+            </div>
+
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1601050690597-df0568f70950">
+
+                <div class="food-info">
+
+                    <h4>Veg Biryani</h4>
+
+                    <p>
+                        Fresh vegetables with aromatic rice.
+                    </p>
+
+                    <div class="price">₹160</div>
+
+                </div>
+
+            </div>
+
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe">
+
+                <div class="food-info">
+
+                    <h4>Paneer Masala</h4>
+
+                    <p>
+                        Soft paneer in rich creamy gravy.
+                    </p>
+
+                    <div class="price">₹180</div>
+
+                </div>
+
+            </div>
+
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1603894584373-5ac82b2ae398">
+
+                <div class="food-info">
+
+                    <h4>Butter Chicken</h4>
+
+                    <p>
+                        Creamy and delicious chicken curry.
+                    </p>
+
+                    <div class="price">₹240</div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- FAST FOOD -->
+
+    <div class="category">
+
+        <h3>🍕 Fast Food</h3>
+
+        <div class="food-grid">
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38">
+
+                <div class="food-info">
+
+                    <h4>Cheese Pizza</h4>
+
+                    <p>
+                        Extra cheese with fresh toppings.
+                    </p>
+
+                    <div class="price">₹280</div>
+
+                </div>
+
+            </div>
+
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd">
+
+                <div class="food-info">
+
+                    <h4>Chicken Burger</h4>
+
+                    <p>
+                        Crispy chicken with fresh vegetables.
+                    </p>
+
+                    <div class="price">₹180</div>
+
+                </div>
+
+            </div>
+
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601">
+
+                <div class="food-info">
+
+                    <h4>Creamy Pasta</h4>
+
+                    <p>
+                        Italian style creamy pasta.
+                    </p>
+
+                    <div class="price">₹200</div>
+
+                </div>
+
+            </div>
+
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1603133872878-684f208fb84b">
+
+                <div class="food-info">
+
+                    <h4>Fried Rice</h4>
+
+                    <p>
+                        Fresh vegetables with fried rice.
+                    </p>
+
+                    <div class="price">₹150</div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- DESSERTS -->
+
+    <div class="category">
+
+        <h3>🍰 Desserts</h3>
+
+        <div class="food-grid">
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587">
+
+                <div class="food-info">
+
+                    <h4>Chocolate Cake</h4>
+
+                    <p>
+                        Soft and delicious chocolate cake.
+                    </p>
+
+                    <div class="price">₹120</div>
+
+                </div>
+
+            </div>
+
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307">
+
+                <div class="food-info">
+
+                    <h4>Donuts</h4>
+
+                    <p>
+                        Freshly prepared glazed donuts.
+                    </p>
+
+                    <div class="price">₹100</div>
+
+                </div>
+
+            </div>
+
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1563805042-7684c019e1cb">
+
+                <div class="food-info">
+
+                    <h4>Ice Cream</h4>
+
+                    <p>
+                        Creamy vanilla and chocolate ice cream.
+                    </p>
+
+                    <div class="price">₹90</div>
+
+                </div>
+
+            </div>
+
+
+            <div class="food-card">
+
+                <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b">
+
+                <div class="food-info">
+
+                    <h4>Chocolate Dessert</h4>
+
+                    <p>
+                        Rich chocolate dessert.
+                    </p>
+
+                    <div class="price">₹140</div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= SPECIAL OFFER ================= -->
+
+<div class="offer">
+
+    <h2>🔥 Weekend Special Offer!</h2>
+
+    <p>
+        Buy 2 Main Courses and Get 1 Dessert FREE!
+    </p>
+
+    <a href="#reservation" class="btn">
+        Book Now
+    </a>
+
+</div>
+
+
+<!-- ================= GALLERY ================= -->
+
+<section id="gallery">
+
+    <h2 class="section-title">
+        Our <span>Food Gallery</span>
+    </h2>
+
+    <div class="gallery">
+
+        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38">
+
+        <img src="https://images.unsplash.com/photo-1563379091339-03246963d51a">
+
+        <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd">
+
+        <img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601">
+
+        <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe">
+
+        <img src="https://images.unsplash.com/photo-1603894584373-5ac82b2ae398">
+
+        <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587">
+
+        <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307">
+
+        <img src="https://images.unsplash.com/photo-1563805042-7684c019e1cb">
+
+        <img src="https://images.unsplash.com/photo-1515003197210-e0cd71810b5f">
+
+        <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4">
+
+        <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9">
+
+    </div>
+
+</section>
+
+
+<!-- ================= CHEFS ================= -->
+
+<section id="chefs">
+
+    <h2 class="section-title">
+        Meet Our <span>Chefs</span>
+    </h2>
+
+    <div class="chef-grid">
+
+        <div class="chef">
+
+            <img src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c">
+
+            <h3>Chef Arjun</h3>
+
+            <p>Head Chef • Indian Cuisine</p>
+
+        </div>
+
+
+        <div class="chef">
+
+            <img src="https://images.unsplash.com/photo-1583394293214-28ded15ee548">
+
+            <h3>Chef Priya</h3>
+
+            <p>Pastry Chef • Desserts</p>
+
+        </div>
+
+
+        <div class="chef">
+
+            <img src="https://images.unsplash.com/photo-1581299894007-aaa50297cf16">
+
+            <h3>Chef Rahul</h3>
+
+            <p>Chef • Italian & Chinese</p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= RESERVATION ================= -->
+
+<section id="reservation">
+
+    <h2 class="section-title">
+        Reserve Your <span>Table</span>
+    </h2>
+
+    <div class="reservation">
+
+        <form onsubmit="bookTable(event)">
+
+            <input
+                type="text"
+                placeholder="Full Name"
+                required
+            >
+
+            <input
+                type="email"
+                placeholder="Email Address"
+                required
+            >
+
+            <input
+                type="tel"
+                placeholder="Phone Number"
+                required
+            >
+
+            <input
+                type="date"
+                required
+            >
+
+            <input
+                type="time"
+                required
+            >
+
+            <select required>
+
+                <option value="">
+                    Number of Guests
+                </option>
+
+                <option>1 Guest</option>
+                <option>2 Guests</option>
+                <option>3 Guests</option>
+                <option>4 Guests</option>
+                <option>5 Guests</option>
+                <option>6+ Guests</option>
+
+            </select>
+
+            <textarea
+                placeholder="Special Request">
+            </textarea>
+
+            <button type="submit">
+                Confirm Reservation
+            </button>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+<!-- ================= CONTACT ================= -->
+
+<section id="contact">
+
+    <h2 class="section-title">
+        Contact <span>Us</span>
+    </h2>
+
+    <div class="contact-grid">
+
+        <div class="contact-card">
+
+            <div class="icon">📍</div>
+
+            <h3>Our Location</h3>
+
+            <p>
+                Spice Garden Restaurant<br>
+                Perundurai, Erode<br>
+                Tamil Nadu, India
+            </p>
+
+        </div>
+
+
+        <div class="contact-card">
+
+            <div class="icon">📞</div>
+
+            <h3>Call Us</h3>
+
+            <p>
+                +91 98765 43210<br>
+                +91 87654 32109
+            </p>
+
+        </div>
+
+
+        <div class="contact-card">
+
+            <div class="icon">🕒</div>
+
+            <h3>Opening Hours</h3>
+
+            <p>
+                Monday - Friday<br>
+                11:00 AM - 10:00 PM<br><br>
+
+                Saturday - Sunday<br>
+                10:00 AM - 11:00 PM
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer>
+
+    <h2>🍽️ Spice Garden Restaurant</h2>
+
+    <p>
+        Delicious food. Beautiful moments.
+    </p>
+
+    <div class="social">
+        📸 &nbsp; 👍 &nbsp; ▶️
+    </div>
+
+    <p>
+        © 2026 Spice Garden. All Rights Reserved.
+    </p>
+
+</footer>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+    function bookTable(event) {
+
+        event.preventDefault();
+
+        alert(
+            "✅ Your table has been reserved successfully!\n\nThank you for choosing Spice Garden Restaurant."
+        );
+
+    }
+
+</script>
+
+
+</body>
+
+</html>
