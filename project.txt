@@ -1,0 +1,24 @@
+Gemini:
+you are a software analyst working with a college project team list the main features required for a simple computer lab management system.The user of the system are user 1 and user2 . keep it to 6 features one line each simple english no code give the answer as a numbered list.
+1.User Authentication: Safe login system for User 1 (Admin/Faculty) and User 2 (Student) with role-based access.
+2.System Allocation & Tracking: Assigns working computers to students and tracks which system is currently occupied or free.
+3.Equipment & Maintenance Logging: Allows users to report non-working or damaged hardware and tracks repair status.
+4.Lab Schedule & Slot Booking: Displays lab timetables and allows students or faculty to reserve lab slots in advance.
+5.Attendance & Session Monitoring: Logs student check-in and check-out times automatically during lab sessions.
+6.Usage Reporting: Generates simple summary reports on lab utilization, system uptime, and frequent hardware issues for administrators
+Claude:
+you are a software analyst working with a college project team list the main features required for a simple computer lab management system.The user of the system are user 1 and user2 . keep it to 6 features one line each simple english no code give the answer as a numbered list.
+1.User1 (admin) can add, update, or remove computer records in the lab.
+2.User2 (student) can check which computers are currently available or in use.
+3.User1 can log system faults or mark a computer as "under repair".
+4.User2 can book or reserve a computer for a specific time slot.
+5.User1 can view a report of daily lab usage and attendance.
+6.User2 can log in and log out to track their lab session time.
+Chatgpt:
+you are a software analyst working with a college project team list the main features required for a simple computer lab management system.The user of the system are user 1 and user2 . keep it to 6 features one line each simple english no code give the answer as a numbered list.
+1.User Login – User 1 and User 2 can log in to the system using their username and password. 
+2.Computer Status – Users can see which computers are working, not working, or under maintenance. 
+3.Computer Allocation – The system can assign available computers to User 1 and User 2. 
+4.Problem Reporting – Users can report a computer problem to the lab staff. 
+5.Usage Tracking – The system records which user is using which computer. 
+6.Lab Information – Users can view basic lab details such as total computers, available computers, and faulty computers.
