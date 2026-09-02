@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Computer Lab Management System</title>
+  
+  <!-- Inter Font & FontAwesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-light">
+  
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-microchip"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">LabPulse</span>
+          <span class="brand-sub">CLMS v2.4</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active" data-target="dashboard-section">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-target="allocation-section">
+          <i class="fa-solid fa-desktop"></i>
+          <span>Workstation Allocations</span>
+        </a>
+        <a href="#" class="nav-item" data-target="schedule-section">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>Lab Timetable</span>
+        </a>
+        <a href="#" class="nav-item" data-target="maintenance-section">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+          <span>Maintenance Logs</span>
+        </a>
+        <a href="#" class="nav-item" data-target="sessions-section">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Session Logs</span>
+        </a>
+        <a href="#" class="nav-item admin-only" data-target="reports-section">
+          <i class="fa-solid fa-file-invoice"></i>
+          <span>Admin Reports</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="theme-toggle-btn" class="btn-theme-toggle" title="Toggle Dark/Light Mode">
+          <i class="fa-solid fa-moon"></i>
+          <span>Dark Mode</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="header-titles">
+          <h1 id="page-title">Dashboard</h1>
+          <p id="page-subtitle">Manage and view dashboard operational parameters</p>
+        </div>
+
+        <div class="topbar-actions">
+          <!-- Live Session Check-In Button -->
+          <button id="session-toggle-btn" class="btn btn-outline">
+            <i class="fa-solid fa-right-to-bracket"></i> Check-In Session
+          </button>
+
+          <!-- System Role Switcher -->
+          <div class="role-selector-wrapper">
+            <i class="fa-solid fa-user-gear"></i>
+            <select id="role-select" class="role-select">
+              <option value="admin">Admin Mode</option>
+              <option value="student">Student Mode</option>
+            </select>
+          </div>
+
+          <!-- Profile / Auth Button -->
+          <div class="user-profile-card" id="user-profile-card">
+            <div class="user-avatar" id="user-avatar">AD</div>
+            <div class="user-info">
+              <span class="user-name" id="user-name">Prof. Alan Turing</span>
+              <span class="user-role-badge" id="user-role-badge">Administrator</span>
+            </div>
+            <button class="btn-auth-trigger" id="open-auth-modal-btn" title="Sign In or Switch User">
+              <i class="fa-solid fa-right-to-bracket"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Views Container -->
+      <div class="view-container">
+        
+        <!-- 1. Dashboard View -->
+        <section id="dashboard-section" class="view-section active">
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-icon total"><i class="fa-solid fa-server"></i></div>
+              <div class="metric-data">
+                <span class="metric-value" id="dash-total-pcs">0</span>
+                <span class="metric-label">Total Workstations</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon free"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="metric-data">
+                <span class="metric-value" id="dash-free-pcs">0</span>
+                <span class="metric-label">Available / Free</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon occupied"><i class="fa-solid fa-laptop-code"></i></div>
+              <div class="metric-data">
+                <span class="metric-value" id="dash-occupied-pcs">0</span>
+                <span class="metric-label">Active / Occupied</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon repair"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="metric-data">
+                <span class="metric-value" id="dash-faulty-pcs">0</span>
+                <span class="metric-label">Under Maintenance</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Real-Time Workstation Grid Map</h2>
+              <div class="legend">
+                <span class="legend-item"><i class="dot free"></i> Available</span>
+                <span class="legend-item"><i class="dot occupied"></i> In Use</span>
+                <span class="legend-item"><i class="dot repair"></i> Maintenance</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="dashboard-pc-grid" class="pc-grid"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Workstation Allocations View -->
+        <section id="allocation-section" class="view-section">
+          <div class="panel">
+            <div class="panel-header flex-between">
+              <h2>Workstation Inventory & Assignment</h2>
+              <div class="filter-controls">
+                <div class="search-input-wrapper">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="pc-search" placeholder="Search workstation ID or user..." />
+                </div>
+                <select id="pc-filter-status" class="filter-select">
+                  <option value="all">All Statuses</option>
+                  <option value="Free">Free</option>
+                  <option value="Occupied">Occupied</option>
+                  <option value="Under Repair">Under Repair</option>
+                </select>
+              </div>
+            </div>
+            <div class="panel-body no-padding">
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>System ID</th>
+                      <th>Hardware Specifications</th>
+                      <th>Status</th>
+                      <th>Current User</th>
+                      <th>Session Start</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="allocation-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Lab Timetable / Schedule View -->
+        <section id="schedule-section" class="view-section">
+          <div class="panel">
+            <div class="panel-header flex-between">
+              <h2>Lab Session Timetable & Reservation</h2>
+              <button id="open-booking-modal-btn" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Reserve Lab Slot
+              </button>
+            </div>
+            <div class="panel-body no-padding">
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Slot Code</th>
+                      <th>Date</th>
+                      <th>Time Window</th>
+                      <th>Purpose / Course</th>
+                      <th>Booked By</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="schedule-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. Maintenance Logs View -->
+        <section id="maintenance-section" class="view-section">
+          <div class="panel">
+            <div class="panel-header flex-between">
+              <h2>Hardware Repair & Maintenance Ticket Register</h2>
+              <button id="open-fault-modal-btn" class="btn btn-warning">
+                <i class="fa-solid fa-bug"></i> Report Hardware Fault
+              </button>
+            </div>
+            <div class="panel-body no-padding">
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Ticket ID</th>
+                      <th>System ID</th>
+                      <th>Faulty Component</th>
+                      <th>Description</th>
+                      <th>Logged Date</th>
+                      <th>Status</th>
+                      <th class="admin-only">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="maintenance-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Session Logs View -->
+        <section id="sessions-section" class="view-section">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Historical Session Logs</h2>
+            </div>
+            <div class="panel-body no-padding">
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Session ID</th>
+                      <th>Student / User</th>
+                      <th>System Used</th>
+                      <th>Check-In Time</th>
+                      <th>Check-Out Time</th>
+                      <th>Total Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody id="session-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. Admin Reports View -->
+        <section id="reports-section" class="view-section admin-only">
+          <div class="panel">
+            <div class="panel-header flex-between">
+              <h2>Operational Reports & Analytics</h2>
+              <button id="print-report-btn" class="btn btn-secondary">
+                <i class="fa-solid fa-print"></i> Export / Print Report
+              </button>
+            </div>
+            <div class="panel-body">
+              <p class="text-muted">Generate full analytical export logs for workstation utilization and active session histories.</p>
+              <div class="report-preview-box">
+                <i class="fa-solid fa-file-pdf"></i>
+                <div>
+                  <h4>Computer Lab Utilization Summary</h4>
+                  <p>Aggregated hardware uptime, fault frequencies, and daily user allocations.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Booking Modal -->
+  <div id="booking-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Reserve Lab Timetable Slot</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="booking-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="book-date">Date</label>
+            <input type="date" id="book-date" required />
+          </div>
+          <div class="form-group">
+            <label for="book-time">Time Window</label>
+            <input type="text" id="book-time" placeholder="e.g. 02:00 PM - 04:00 PM" required />
+          </div>
+          <div class="form-group">
+            <label for="book-purpose">Purpose / Module Name</label>
+            <input type="text" id="book-purpose" placeholder="e.g. Advanced AI Workshop" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline close-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm Reservation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Fault Report Modal -->
+  <div id="fault-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Report Hardware / Technical Fault</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="fault-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="fault-system-id">Select Target Workstation</label>
+            <select id="fault-system-id" required></select>
+          </div>
+          <div class="form-group">
+            <label for="fault-component">Faulty Component</label>
+            <input type="text" id="fault-component" placeholder="e.g. Keyboard, RAM, GPU, Monitor" required />
+          </div>
+          <div class="form-group">
+            <label for="fault-desc">Issue Description</label>
+            <textarea id="fault-desc" rows="3" placeholder="Describe the behavior or damage observed..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline close-modal">Cancel</button>
+          <button type="submit" class="btn btn-warning">Submit Maintenance Ticket</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Auth Modal (Login / Sign Up) -->
+  <div id="auth-modal" class="modal">
+    <div class="modal-content auth-modal-content">
+      <div class="modal-header">
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab active" id="tab-login-btn">Sign In</button>
+          <button type="button" class="auth-tab" id="tab-signup-btn">Create Account</button>
+        </div>
+        <button class="close-modal">&times;</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form active">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="login-email">Email or Username</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="text" id="login-email" placeholder="e.g. turing@university.edu" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="login-password" placeholder="••••••••" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary btn-block">Sign In to Account</button>
+        </div>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signup-form" class="auth-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="signup-name">Full Name</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" id="signup-name" placeholder="e.g. Ada Lovelace" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-email">Email Address</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="signup-email" placeholder="e.g. ada@university.edu" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-role">Account Type</label>
+            <select id="signup-role">
+              <option value="student">Student User</option>
+              <option value="admin">Lab Administrator</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Create Password</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="signup-password" placeholder="••••••••" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
