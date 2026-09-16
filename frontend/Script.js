@@ -7,6 +7,7 @@
 const state = {
   currentUserRole: 'admin', // 'admin' or 'student'
   activeSession: false,
+  gridFilter: 'all', // 'all', 'Free', 'Occupied', 'Under Repair'
   currentUserProfile: {
     name: 'Prof. Alan Turing',
     email: 'turing@university.edu',
@@ -88,12 +89,14 @@ function showToast(message, type = 'info') {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
+  initLiveClock();
   initNavigation();
   initRoleSwitcher();
   initModals();
   initAuthTabSystem();
   initForms();
   initFilters();
+  initGridFilterPills();
   initSessionToggle();
   initThemeToggle();
 
@@ -101,6 +104,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   await checkDatabaseConnection();
   await fetchAllData();
 });
+
+// --- Real-Time Digital Clock ---
+function initLiveClock() {
+  const clockEl = document.getElementById('live-clock-text');
+  if (!clockEl) return;
+  const updateClock = () => {
+    const now = new Date();
+    clockEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+// --- Workstation Grid Filter Pills ---
+function initGridFilterPills() {
+  const pills = document.querySelectorAll('.grid-pill');
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      pills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      state.gridFilter = pill.getAttribute('data-filter') || 'all';
+      renderDashboardGrid();
+    });
+  });
+}
 
 // --- Database Connectivity & Data Fetching ---
 async function checkDatabaseConnection() {
@@ -256,23 +284,138 @@ function renderMetrics() {
   if (freeEl) freeEl.innerText = free;
   if (occEl) occEl.innerText = occupied;
   if (faultEl) faultEl.innerText = fault;
+
+  // Percentage calculations
+  const freePct = total > 0 ? Math.round((free / total) * 100) : 0;
+  const occPct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+  const faultPct = total > 0 ? Math.round((fault / total) * 100) : 0;
+  const healthPct = total > 0 ? Math.round(((total - fault) / total) * 100) : 100;
+
+  // Metric Chips
+  const chipFree = document.getElementById('chip-free-pct');
+  const chipOcc = document.getElementById('chip-occ-pct');
+  const chipRepair = document.getElementById('chip-repair-pct');
+  if (chipFree) chipFree.innerText = `${freePct}% Ready`;
+  if (chipOcc) chipOcc.innerText = `${occPct}% In Use`;
+  if (chipRepair) chipRepair.innerText = `${faultPct}% Fault`;
+
+  // Metric Progress Bars
+  const barFree = document.getElementById('bar-free-pcs');
+  const barOcc = document.getElementById('bar-occupied-pcs');
+  const barFault = document.getElementById('bar-faulty-pcs');
+  if (barFree) barFree.style.width = `${freePct}%`;
+  if (barOcc) barOcc.style.width = `${occPct}%`;
+  if (barFault) barFault.style.width = `${faultPct}%`;
+
+  // Filter Pill Counts
+  const pillAll = document.getElementById('pill-count-all');
+  const pillFree = document.getElementById('pill-count-free');
+  const pillOcc = document.getElementById('pill-count-occupied');
+  const pillRepair = document.getElementById('pill-count-repair');
+  if (pillAll) pillAll.innerText = total;
+  if (pillFree) pillFree.innerText = free;
+  if (pillOcc) pillOcc.innerText = occupied;
+  if (pillRepair) pillRepair.innerText = fault;
+
+  // Admin Reports Intelligence Values
+  const repUtilVal = document.getElementById('rep-utilization-val');
+  const repUtilBar = document.getElementById('rep-utilization-bar');
+  const repUtilCaption = document.getElementById('rep-utilization-caption');
+  if (repUtilVal) repUtilVal.innerText = `${occPct}%`;
+  if (repUtilBar) repUtilBar.style.width = `${occPct}%`;
+  if (repUtilCaption) repUtilCaption.innerText = `${occupied} of ${total} workstations occupied`;
+
+  const repAvailVal = document.getElementById('rep-availability-val');
+  const repAvailBar = document.getElementById('rep-availability-bar');
+  const repAvailCaption = document.getElementById('rep-availability-caption');
+  if (repAvailVal) repAvailVal.innerText = `${freePct}%`;
+  if (repAvailBar) repAvailBar.style.width = `${freePct}%`;
+  if (repAvailCaption) repAvailCaption.innerText = `${free} workstations ready for allocation`;
+
+  const repRelVal = document.getElementById('rep-reliability-val');
+  const repRelBar = document.getElementById('rep-reliability-bar');
+  if (repRelVal) repRelVal.innerText = `${healthPct}%`;
+  if (repRelBar) repRelBar.style.width = `${healthPct}%`;
+
+  // Printable Audit Certificate Details
+  const docTotal = document.getElementById('doc-total-pcs');
+  const docActive = document.getElementById('doc-active-pcs');
+  const docFree = document.getElementById('doc-free-pcs');
+  const docRepair = document.getElementById('doc-repair-pcs');
+  const docDate = document.getElementById('audit-date-label');
+  if (docTotal) docTotal.innerText = `${total} Units`;
+  if (docActive) docActive.innerText = `${occupied} Students`;
+  if (docFree) docFree.innerText = `${free} Units Free`;
+  if (docRepair) docRepair.innerText = `${fault} In Maintenance`;
+  if (docDate) docDate.innerText = `Audit Date: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
 
 function renderDashboardGrid() {
   if (!pcGridContainer) return;
   pcGridContainer.innerHTML = '';
-  state.workstations.forEach(pc => {
+
+  const filteredPCs = state.gridFilter === 'all' 
+    ? state.workstations 
+    : state.workstations.filter(w => w.status === state.gridFilter);
+
+  if (filteredPCs.length === 0) {
+    pcGridContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 32px; color: var(--text-muted); font-size: 0.9rem;">No workstations matching current filter "${state.gridFilter}".</div>`;
+    return;
+  }
+
+  filteredPCs.forEach(pc => {
     const statusClass = pc.status === 'Free' ? 'status-free' : pc.status === 'Occupied' ? 'status-occupied' : 'status-repair';
     const card = document.createElement('div');
     card.className = `pc-node ${statusClass}`;
     card.id = `pc-node-${pc.id.toLowerCase()}`;
+    card.setAttribute('title', `Click to manage ${pc.id} (${pc.status})`);
+    
     card.innerHTML = `
+      <div class="pc-node-top">
+        <span class="pc-id-tag">${pc.id}</span>
+        <span class="pc-status-led" title="Status: ${pc.status}"></span>
+      </div>
       <i class="fa-solid fa-desktop pc-icon"></i>
-      <div class="pc-id">${pc.id}</div>
-      <div class="pc-user">${pc.user || '-'}</div>
+      <div class="pc-user" title="User: ${pc.user || 'None'}">${pc.user || '<span style="color: var(--text-muted)">Unassigned</span>'}</div>
+      <div class="pc-specs-badge" title="${pc.specs}">${pc.specs}</div>
     `;
+
+    // Interactive card click handler
+    card.addEventListener('click', () => {
+      handleWorkstationCardClick(pc);
+    });
+
     pcGridContainer.appendChild(card);
   });
+}
+
+function handleWorkstationCardClick(pc) {
+  if (state.currentUserRole === 'admin') {
+    if (pc.status === 'Free') {
+      assignPC(pc.id);
+    } else if (pc.status === 'Occupied') {
+      if (confirm(`Workstation ${pc.id} is currently occupied by "${pc.user}". Release this workstation?`)) {
+        releasePC(pc.id);
+      }
+    } else if (pc.status === 'Under Repair') {
+      const relatedTicket = state.maintenanceLogs.find(l => (l.pcId === pc.id || l.pc_id === pc.id) && l.status === 'Under Repair');
+      const ticketDesc = relatedTicket ? `\nFault: ${relatedTicket.component} - ${relatedTicket.desc || relatedTicket.description}` : '';
+      if (confirm(`Workstation ${pc.id} is under repair.${ticketDesc}\n\nMark this maintenance issue as fixed?`)) {
+        if (relatedTicket) resolveFault(relatedTicket.id);
+      }
+    }
+  } else {
+    // Student mode
+    if (pc.status === 'Free') {
+      if (confirm(`Allocate workstation ${pc.id} for your session?`)) {
+        assignPC(pc.id);
+      }
+    } else if (pc.status === 'Occupied') {
+      showToast(`Workstation ${pc.id} is currently in use by ${pc.user}`, 'info');
+    } else {
+      showToast(`Workstation ${pc.id} is currently under maintenance`, 'warning');
+    }
+  }
 }
 
 function renderAllocationTable() {

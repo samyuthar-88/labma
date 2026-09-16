@@ -8,10 +8,10 @@
   <meta property="og:title" content="LabPulse - Computer Lab Management System" />
   <meta property="og:description" content="A computer lab management system for tracking workstation allocations, schedules, maintenance logs, and sessions backed by Supabase PostgreSQL." />
   
-  <!-- Inter Font & FontAwesome Icons -->
+  <!-- Fonts: DM Sans & JetBrains Mono for High-Precision Console Feel -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   
   <link rel="stylesheet" href="style.css" />
@@ -71,7 +71,13 @@
       <!-- Top Bar -->
       <header class="topbar">
         <div class="header-titles">
-          <h1 id="page-title">Dashboard</h1>
+          <div class="title-with-pill">
+            <h1 id="page-title">Dashboard</h1>
+            <div class="live-clock" id="live-clock" title="Current Laboratory System Time">
+              <i class="fa-regular fa-clock"></i>
+              <span id="live-clock-text">--:--:--</span>
+            </div>
+          </div>
           <p id="page-subtitle">Manage and view dashboard operational parameters</p>
         </div>
 
@@ -83,13 +89,13 @@
           </div>
 
           <!-- Live Session Check-In Button -->
-          <button id="session-toggle-btn" class="btn btn-outline">
-            <i class="fa-solid fa-right-to-bracket"></i> Check-In Session
+          <button id="session-toggle-btn" class="btn btn-outline session-btn">
+            <i class="fa-solid fa-right-to-bracket"></i> <span>Check-In Session</span>
           </button>
 
           <!-- System Role Switcher -->
           <div class="role-selector-wrapper">
-            <i class="fa-solid fa-user-gear"></i>
+            <i class="fa-solid fa-shield-halved"></i>
             <select id="role-select" class="role-select">
               <option value="admin">Admin Mode</option>
               <option value="student">Student Mode</option>
@@ -104,7 +110,7 @@
               <span class="user-role-badge" id="user-role-badge">Administrator</span>
             </div>
             <button class="btn-auth-trigger" id="open-auth-modal-btn" title="Sign In or Switch User">
-              <i class="fa-solid fa-right-to-bracket"></i>
+              <i class="fa-solid fa-arrow-right-to-bracket"></i>
             </button>
           </div>
         </div>
@@ -117,42 +123,79 @@
         <section id="dashboard-section" class="view-section active">
           <div class="metrics-grid">
             <div class="metric-card">
-              <div class="metric-icon total"><i class="fa-solid fa-server"></i></div>
+              <div class="metric-card-top">
+                <div class="metric-icon total"><i class="fa-solid fa-server"></i></div>
+                <span class="metric-chip total-chip">Capacity</span>
+              </div>
               <div class="metric-data">
                 <span class="metric-value" id="dash-total-pcs">0</span>
                 <span class="metric-label">Total Workstations</span>
               </div>
+              <div class="metric-footer">
+                <div class="metric-bar-bg"><div class="metric-bar total-bar" style="width: 100%"></div></div>
+                <span class="metric-subtext">Lab Room 302 • Fixed Node Units</span>
+              </div>
             </div>
+
             <div class="metric-card">
-              <div class="metric-icon free"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="metric-card-top">
+                <div class="metric-icon free"><i class="fa-solid fa-circle-check"></i></div>
+                <span class="metric-chip free-chip" id="chip-free-pct">57% Ready</span>
+              </div>
               <div class="metric-data">
-                <span class="metric-value" id="dash-free-pcs">0</span>
+                <span class="metric-value text-success" id="dash-free-pcs">0</span>
                 <span class="metric-label">Available / Free</span>
               </div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-icon occupied"><i class="fa-solid fa-laptop-code"></i></div>
-              <div class="metric-data">
-                <span class="metric-value" id="dash-occupied-pcs">0</span>
-                <span class="metric-label">Active / Occupied</span>
+              <div class="metric-footer">
+                <div class="metric-bar-bg"><div class="metric-bar free-bar" id="bar-free-pcs" style="width: 57%"></div></div>
+                <span class="metric-subtext" id="subtext-free-pcs">Ready for immediate allocation</span>
               </div>
             </div>
+
             <div class="metric-card">
-              <div class="metric-icon repair"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="metric-card-top">
+                <div class="metric-icon occupied"><i class="fa-solid fa-laptop-code"></i></div>
+                <span class="metric-chip occupied-chip" id="chip-occ-pct">33% In Use</span>
+              </div>
               <div class="metric-data">
-                <span class="metric-value" id="dash-faulty-pcs">0</span>
+                <span class="metric-value text-warning" id="dash-occupied-pcs">0</span>
+                <span class="metric-label">Active / Occupied</span>
+              </div>
+              <div class="metric-footer">
+                <div class="metric-bar-bg"><div class="metric-bar occupied-bar" id="bar-occupied-pcs" style="width: 33%"></div></div>
+                <span class="metric-subtext" id="subtext-occupied-pcs">Active student sessions</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-card-top">
+                <div class="metric-icon repair"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <span class="metric-chip repair-chip" id="chip-repair-pct">10% Fault</span>
+              </div>
+              <div class="metric-data">
+                <span class="metric-value text-danger" id="dash-faulty-pcs">0</span>
                 <span class="metric-label">Under Maintenance</span>
+              </div>
+              <div class="metric-footer">
+                <div class="metric-bar-bg"><div class="metric-bar repair-bar" id="bar-faulty-pcs" style="width: 10%"></div></div>
+                <span class="metric-subtext" id="subtext-faulty-pcs">Open hardware tickets</span>
               </div>
             </div>
           </div>
 
           <div class="panel">
-            <div class="panel-header">
-              <h2>Real-Time Workstation Grid Map</h2>
-              <div class="legend">
-                <span class="legend-item"><i class="dot free"></i> Available</span>
-                <span class="legend-item"><i class="dot occupied"></i> In Use</span>
-                <span class="legend-item"><i class="dot repair"></i> Maintenance</span>
+            <div class="panel-header flex-between">
+              <div>
+                <h2>Real-Time Workstation Grid Map</h2>
+                <p class="panel-subtitle">Interactive floor view • Click any workstation to allocate or release</p>
+              </div>
+              <div class="grid-header-tools">
+                <div class="grid-filter-pills" id="grid-filter-pills">
+                  <button type="button" class="grid-pill active" data-filter="all">All (<span id="pill-count-all">30</span>)</button>
+                  <button type="button" class="grid-pill" data-filter="Free"><span class="pill-dot free"></span>Free (<span id="pill-count-free">17</span>)</button>
+                  <button type="button" class="grid-pill" data-filter="Occupied"><span class="pill-dot occupied"></span>In Use (<span id="pill-count-occupied">10</span>)</button>
+                  <button type="button" class="grid-pill" data-filter="Under Repair"><span class="pill-dot repair"></span>Repair (<span id="pill-count-repair">3</span>)</button>
+                </div>
               </div>
             </div>
             <div class="panel-body">
@@ -288,18 +331,115 @@
         <section id="reports-section" class="view-section admin-only">
           <div class="panel">
             <div class="panel-header flex-between">
-              <h2>Operational Reports & Analytics</h2>
-              <button id="print-report-btn" class="btn btn-secondary">
-                <i class="fa-solid fa-print"></i> Export / Print Report
+              <div>
+                <h2>Operational Intelligence & Laboratory Audit</h2>
+                <p class="panel-subtitle">Audited metrics, hardware reliability index, and printable official log</p>
+              </div>
+              <button id="print-report-btn" class="btn btn-primary">
+                <i class="fa-solid fa-print"></i> Export / Print Audit Report
               </button>
             </div>
             <div class="panel-body">
-              <p class="text-muted">Generate full analytical export logs for workstation utilization and active session histories.</p>
-              <div class="report-preview-box">
-                <i class="fa-solid fa-file-pdf"></i>
-                <div>
-                  <h4>Computer Lab Utilization Summary</h4>
-                  <p>Aggregated hardware uptime, fault frequencies, and daily user allocations.</p>
+              <!-- KPI Summary Cards -->
+              <div class="analytics-kpi-grid">
+                <div class="kpi-card">
+                  <div class="kpi-top">
+                    <span class="kpi-title">Lab Utilization Rate</span>
+                    <span class="kpi-badge positive"><i class="fa-solid fa-arrow-trend-up"></i> Normal</span>
+                  </div>
+                  <div class="kpi-value" id="rep-utilization-val">33%</div>
+                  <div class="kpi-meter"><div class="kpi-fill" id="rep-utilization-bar" style="width: 33%"></div></div>
+                  <div class="kpi-caption" id="rep-utilization-caption">10 of 30 workstations occupied</div>
+                </div>
+
+                <div class="kpi-card">
+                  <div class="kpi-top">
+                    <span class="kpi-title">Hardware Availability</span>
+                    <span class="kpi-badge positive"><i class="fa-solid fa-check"></i> High</span>
+                  </div>
+                  <div class="kpi-value text-success" id="rep-availability-val">57%</div>
+                  <div class="kpi-meter"><div class="kpi-fill success" id="rep-availability-bar" style="width: 57%"></div></div>
+                  <div class="kpi-caption" id="rep-availability-caption">17 workstations ready for allocation</div>
+                </div>
+
+                <div class="kpi-card">
+                  <div class="kpi-top">
+                    <span class="kpi-title">Reliability Index</span>
+                    <span class="kpi-badge info"><i class="fa-solid fa-microchip"></i> Certified</span>
+                  </div>
+                  <div class="kpi-value" id="rep-reliability-val">90%</div>
+                  <div class="kpi-meter"><div class="kpi-fill info" id="rep-reliability-bar" style="width: 90%"></div></div>
+                  <div class="kpi-caption">27 of 30 stations error-free</div>
+                </div>
+
+                <div class="kpi-card">
+                  <div class="kpi-top">
+                    <span class="kpi-title">Database Storage Engine</span>
+                    <span class="kpi-badge positive"><i class="fa-solid fa-shield"></i> Supabase</span>
+                  </div>
+                  <div class="kpi-value" style="font-size: 1.3rem;">PostgreSQL</div>
+                  <div class="kpi-meter"><div class="kpi-fill sync" style="width: 100%"></div></div>
+                  <div class="kpi-caption">5 Relational Tables • RLS Secured</div>
+                </div>
+              </div>
+
+              <!-- Printable Laboratory Audit Certificate Document -->
+              <div class="printable-audit-doc" id="printable-audit-doc">
+                <div class="audit-doc-header">
+                  <div class="audit-doc-seal">
+                    <i class="fa-solid fa-building-columns"></i>
+                  </div>
+                  <div class="audit-doc-info">
+                    <h3 class="audit-doc-title">DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING</h3>
+                    <p class="audit-doc-dept">Central Computing Laboratory • System Audit & Operations Log</p>
+                  </div>
+                  <div class="audit-doc-ref">
+                    <span class="audit-ref-tag">DOC-REF: CLMS-SYS-0916</span>
+                    <span class="audit-date" id="audit-date-label">Audit Date: Sep 16, 2026</span>
+                  </div>
+                </div>
+
+                <div class="audit-doc-grid">
+                  <div class="audit-stat-box">
+                    <span class="asb-label">Total Station Nodes</span>
+                    <span class="asb-val" id="doc-total-pcs">30 Units</span>
+                  </div>
+                  <div class="audit-stat-box">
+                    <span class="asb-label">Current Active Sessions</span>
+                    <span class="asb-val" id="doc-active-pcs">10 Students</span>
+                  </div>
+                  <div class="audit-stat-box">
+                    <span class="asb-label">Available Capacity</span>
+                    <span class="asb-val text-success" id="doc-free-pcs">17 Units Free</span>
+                  </div>
+                  <div class="audit-stat-box">
+                    <span class="asb-label">Repair Queue</span>
+                    <span class="asb-val text-danger" id="doc-repair-pcs">3 In Maintenance</span>
+                  </div>
+                </div>
+
+                <div class="audit-notes">
+                  <div class="audit-note-item">
+                    <i class="fa-solid fa-circle-check text-success"></i>
+                    <span>Hardware diagnostics check completed. All workstations conform to standard departmental specifications.</span>
+                  </div>
+                  <div class="audit-note-item">
+                    <i class="fa-solid fa-circle-check text-success"></i>
+                    <span>Real-time records synchronized with central Supabase PostgreSQL repository with timestamped user sessions.</span>
+                  </div>
+                </div>
+
+                <div class="audit-signature-row">
+                  <div class="audit-sig-block">
+                    <div class="sig-line"></div>
+                    <span class="sig-label">Prof. Alan Turing</span>
+                    <span class="sig-sub">Laboratory Director & Systems Administrator</span>
+                  </div>
+                  <div class="audit-sig-block">
+                    <div class="sig-line"></div>
+                    <span class="sig-label">Academic Computing Operations</span>
+                    <span class="sig-sub">Division Verification Seal</span>
+                  </div>
                 </div>
               </div>
             </div>
