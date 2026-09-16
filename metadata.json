@@ -1,0 +1,8 @@
+{
+  "name": "LabPulse - Computer Lab Management System",
+  "description": "A computer lab management system for tracking workstation allocations, schedules, maintenance logs, and sessions backed by Supabase PostgreSQL.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

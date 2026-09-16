@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Computer Lab Management System</title>
+  <title>LabPulse - Computer Lab Management System</title>
+  <meta name="description" content="A computer lab management system for tracking workstation allocations, schedules, maintenance logs, and sessions backed by Supabase PostgreSQL." />
+  <meta property="og:title" content="LabPulse - Computer Lab Management System" />
+  <meta property="og:description" content="A computer lab management system for tracking workstation allocations, schedules, maintenance logs, and sessions backed by Supabase PostgreSQL." />
   
   <!-- Inter Font & FontAwesome Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -73,6 +76,12 @@
         </div>
 
         <div class="topbar-actions">
+          <!-- Database PostgreSQL Status Badge -->
+          <div id="db-status-badge" class="db-status-badge" title="Database Connection Status">
+            <span class="db-pulse-dot" id="db-pulse-dot"></span>
+            <span id="db-status-text">Supabase PostgreSQL</span>
+          </div>
+
           <!-- Live Session Check-In Button -->
           <button id="session-toggle-btn" class="btn btn-outline">
             <i class="fa-solid fa-right-to-bracket"></i> Check-In Session
@@ -433,6 +442,9 @@
       </form>
     </div>
   </div>
+
+  <!-- Dynamic Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
 
   <script src="script.js"></script>
 </body>

@@ -1,5 +1,6 @@
 /**
- * Computer Lab Management System (CLMS) - Modern JavaScript Implementation
+ * Computer Lab Management System (CLMS) - Supabase PostgreSQL Client
+ * Connected to full-stack Express & Supabase PostgreSQL database backend
  */
 
 // Global App State
@@ -12,44 +13,15 @@ const state = {
     role: 'Administrator',
     avatar: 'AD'
   },
-
-  // Workstation Inventory
-  workstations: Array.from({ length: 30 }, (_, i) => {
-    const id = `PC-${String(i + 1).padStart(2, '0')}`;
-    let status = 'Free';
-    let user = '-';
-    if (i === 2 || i === 8 || i === 14) {
-      status = 'Under Repair';
-    } else if (i % 3 === 0) {
-      status = 'Occupied';
-      user = `Student_${100 + i}`;
-    }
-    return {
-      id,
-      specs: 'Intel i5, 16GB RAM, 512GB SSD',
-      status,
-      user,
-      sessionStart: status === 'Occupied' ? '09:15 AM' : '-'
-    };
-  }),
-
-  // Timetable & Bookings
-  schedules: [
-    { id: 'SLOT-101', date: '2026-09-02', time: '09:00 AM - 11:00 AM', purpose: 'CS101 Lab Session', bookedBy: 'Prof. Alan Turing', status: 'Confirmed' },
-    { id: 'SLOT-102', date: '2026-09-02', time: '11:00 AM - 01:00 PM', purpose: 'Database Systems', bookedBy: 'Dr. Grace Hopper', status: 'Confirmed' }
-  ],
-
-  // Maintenance & Fault Logs
-  maintenanceLogs: [
-    { id: 'M-01', pcId: 'PC-03', component: 'Monitor', desc: 'Display flickers continuously', date: '2026-08-28', status: 'Under Repair' },
-    { id: 'M-02', pcId: 'PC-09', component: 'Mouse', desc: 'Right click non-functional', date: '2026-08-30', status: 'Pending' }
-  ],
-
-  // Session Logs
-  sessions: [
-    { id: 'SES-501', student: 'Student_103', system: 'PC-04', checkIn: '09:00 AM', checkOut: '10:30 AM', duration: '1h 30m' },
-    { id: 'SES-502', student: 'Student_106', system: 'PC-07', checkIn: '09:15 AM', checkOut: 'Active', duration: '-' }
-  ]
+  workstations: [],
+  schedules: [],
+  maintenanceLogs: [],
+  sessions: [],
+  dbStatus: {
+    provider: 'supabase',
+    connected: false,
+    message: 'Connecting to database...'
+  }
 };
 
 // --- DOM References ---
@@ -63,6 +35,9 @@ const pageTitle = document.getElementById('page-title');
 const pageSubtitle = document.getElementById('page-subtitle');
 const sessionToggleBtn = document.getElementById('session-toggle-btn');
 const themeToggleBtn = document.getElementById('theme-toggle-btn');
+const dbStatusText = document.getElementById('db-status-text');
+const dbPulseDot = document.getElementById('db-pulse-dot');
+const toastContainer = document.getElementById('toast-container');
 
 // Modals
 const bookingModal = document.getElementById('booking-modal');
@@ -96,8 +71,23 @@ const pcSearchInput = document.getElementById('pc-search');
 const pcStatusFilter = document.getElementById('pc-filter-status');
 const printReportBtn = document.getElementById('print-report-btn');
 
+// --- Toast Notifications Helper ---
+function showToast(message, type = 'info') {
+  if (!toastContainer) return;
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info';
+  toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+  toastContainer.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
 // --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initNavigation();
   initRoleSwitcher();
   initModals();
@@ -106,11 +96,73 @@ document.addEventListener('DOMContentLoaded', () => {
   initFilters();
   initSessionToggle();
   initThemeToggle();
-  renderAll();
+
+  // Load database status and all records from Supabase backend
+  await checkDatabaseConnection();
+  await fetchAllData();
 });
+
+// --- Database Connectivity & Data Fetching ---
+async function checkDatabaseConnection() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    state.dbStatus = data;
+
+    if (dbStatusText && dbPulseDot) {
+      if (data.provider === 'supabase' && data.connected) {
+        dbStatusText.innerText = 'Supabase PostgreSQL: Connected';
+        dbPulseDot.className = 'db-pulse-dot';
+      } else if (data.supabaseConfigured && !data.connected) {
+        dbStatusText.innerText = 'Supabase: Schema Pending';
+        dbPulseDot.className = 'db-pulse-dot warning';
+      } else {
+        dbStatusText.innerText = 'Supabase PostgreSQL: Ready';
+        dbPulseDot.className = 'db-pulse-dot';
+      }
+    }
+  } catch (err) {
+    console.warn('Could not check database status:', err);
+    if (dbStatusText) dbStatusText.innerText = 'Database: Local Active';
+  }
+}
+
+async function fetchAllData() {
+  try {
+    const [pcsRes, schedRes, maintRes, sessRes] = await Promise.all([
+      fetch('/api/workstations'),
+      fetch('/api/schedules'),
+      fetch('/api/maintenance'),
+      fetch('/api/sessions')
+    ]);
+
+    if (pcsRes.ok) state.workstations = await pcsRes.json();
+    if (schedRes.ok) state.schedules = await schedRes.json();
+    if (maintRes.ok) state.maintenanceLogs = await maintRes.json();
+    if (sessRes.ok) state.sessions = await sessRes.json();
+
+    // Check if the current user has an active session
+    const activeUserSession = state.sessions.find(
+      s => s.student === state.currentUserProfile.name && (s.checkOut === 'Active' || s.check_out === 'Active')
+    );
+    if (activeUserSession) {
+      state.activeSession = true;
+      if (sessionToggleBtn) {
+        sessionToggleBtn.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> Check-Out Session`;
+        sessionToggleBtn.classList.replace('btn-outline', 'btn-warning');
+      }
+    }
+
+    renderAll();
+  } catch (err) {
+    console.error('Error fetching data from API:', err);
+    showToast('Failed to load lab data from database', 'error');
+  }
+}
 
 // --- Theme Management ---
 function initThemeToggle() {
+  if (!themeToggleBtn) return;
   themeToggleBtn.addEventListener('click', () => {
     const isDark = document.body.classList.toggle('theme-dark');
     document.body.classList.toggle('theme-light', !isDark);
@@ -145,6 +197,7 @@ function initNavigation() {
 
 // --- Role Switcher & Auth Profile Rendering ---
 function initRoleSwitcher() {
+  if (!roleSelect) return;
   roleSelect.addEventListener('change', (e) => {
     state.currentUserRole = e.target.value;
     
@@ -160,9 +213,9 @@ function initRoleSwitcher() {
 }
 
 function updateUserProfileDisplay() {
-  userAvatar.innerText = state.currentUserProfile.avatar;
-  userName.innerText = state.currentUserProfile.name;
-  userRoleBadge.innerText = state.currentUserProfile.role;
+  if (userAvatar) userAvatar.innerText = state.currentUserProfile.avatar;
+  if (userName) userName.innerText = state.currentUserProfile.name;
+  if (userRoleBadge) userRoleBadge.innerText = state.currentUserProfile.role;
 
   if (state.currentUserRole === 'admin') {
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
@@ -171,7 +224,8 @@ function updateUserProfileDisplay() {
     
     const activeSection = document.querySelector('.view-section.active');
     if (activeSection && activeSection.id === 'reports-section') {
-      document.querySelector('[data-target="dashboard-section"]').click();
+      const dashNav = document.querySelector('[data-target="dashboard-section"]');
+      if (dashNav) dashNav.click();
     }
   }
 }
@@ -193,33 +247,43 @@ function renderMetrics() {
   const occupied = state.workstations.filter(w => w.status === 'Occupied').length;
   const fault = state.workstations.filter(w => w.status === 'Under Repair').length;
 
-  document.getElementById('dash-total-pcs').innerText = total;
-  document.getElementById('dash-free-pcs').innerText = free;
-  document.getElementById('dash-occupied-pcs').innerText = occupied;
-  document.getElementById('dash-faulty-pcs').innerText = fault;
+  const totalEl = document.getElementById('dash-total-pcs');
+  const freeEl = document.getElementById('dash-free-pcs');
+  const occEl = document.getElementById('dash-occupied-pcs');
+  const faultEl = document.getElementById('dash-faulty-pcs');
+
+  if (totalEl) totalEl.innerText = total;
+  if (freeEl) freeEl.innerText = free;
+  if (occEl) occEl.innerText = occupied;
+  if (faultEl) faultEl.innerText = fault;
 }
 
 function renderDashboardGrid() {
+  if (!pcGridContainer) return;
   pcGridContainer.innerHTML = '';
   state.workstations.forEach(pc => {
     const statusClass = pc.status === 'Free' ? 'status-free' : pc.status === 'Occupied' ? 'status-occupied' : 'status-repair';
     const card = document.createElement('div');
     card.className = `pc-node ${statusClass}`;
+    card.id = `pc-node-${pc.id.toLowerCase()}`;
     card.innerHTML = `
       <i class="fa-solid fa-desktop pc-icon"></i>
       <div class="pc-id">${pc.id}</div>
-      <div class="pc-user">${pc.user}</div>
+      <div class="pc-user">${pc.user || '-'}</div>
     `;
     pcGridContainer.appendChild(card);
   });
 }
 
 function renderAllocationTable() {
-  const query = pcSearchInput.value.toLowerCase();
-  const filter = pcStatusFilter.value;
+  if (!allocationTableBody) return;
+  const query = pcSearchInput ? pcSearchInput.value.toLowerCase() : '';
+  const filter = pcStatusFilter ? pcStatusFilter.value : 'all';
 
   const filtered = state.workstations.filter(pc => {
-    const matchesSearch = pc.id.toLowerCase().includes(query) || pc.user.toLowerCase().includes(query);
+    const userStr = pc.user ? pc.user.toLowerCase() : '';
+    const idStr = pc.id.toLowerCase();
+    const matchesSearch = idStr.includes(query) || userStr.includes(query);
     const matchesStatus = filter === 'all' || pc.status === filter;
     return matchesSearch && matchesStatus;
   });
@@ -230,9 +294,9 @@ function renderAllocationTable() {
     
     if (state.currentUserRole === 'admin') {
       if (pc.status === 'Free') {
-        actionBtn = `<button class="btn btn-outline" onclick="assignPC('${pc.id}')">Assign</button>`;
+        actionBtn = `<button class="btn btn-outline" id="btn-assign-${pc.id}" onclick="assignPC('${pc.id}')">Assign</button>`;
       } else if (pc.status === 'Occupied') {
-        actionBtn = `<button class="btn btn-outline" onclick="releasePC('${pc.id}')">Release</button>`;
+        actionBtn = `<button class="btn btn-outline" id="btn-release-${pc.id}" onclick="releasePC('${pc.id}')">Release</button>`;
       }
     }
 
@@ -241,8 +305,8 @@ function renderAllocationTable() {
         <td><strong>${pc.id}</strong></td>
         <td>${pc.specs}</td>
         <td><span class="badge ${badgeClass}">${pc.status}</span></td>
-        <td>${pc.user}</td>
-        <td>${pc.sessionStart}</td>
+        <td>${pc.user || '-'}</td>
+        <td>${pc.sessionStart || pc.session_start || '-'}</td>
         <td>${actionBtn}</td>
       </tr>
     `;
@@ -250,133 +314,171 @@ function renderAllocationTable() {
 }
 
 function renderScheduleTable() {
+  if (!scheduleTableBody) return;
   scheduleTableBody.innerHTML = state.schedules.map(slot => `
     <tr>
       <td><strong>${slot.id}</strong></td>
       <td>${slot.date}</td>
       <td>${slot.time}</td>
       <td>${slot.purpose}</td>
-      <td>${slot.bookedBy}</td>
+      <td>${slot.bookedBy || slot.booked_by}</td>
       <td><span class="badge badge-info">${slot.status}</span></td>
     </tr>
   `).join('');
 }
 
 function renderMaintenanceTable() {
+  if (!maintenanceTableBody) return;
   maintenanceTableBody.innerHTML = state.maintenanceLogs.map(log => `
     <tr>
       <td><strong>${log.id}</strong></td>
-      <td>${log.pcId}</td>
+      <td>${log.pcId || log.pc_id}</td>
       <td>${log.component}</td>
-      <td>${log.desc}</td>
+      <td>${log.desc || log.description}</td>
       <td>${log.date}</td>
       <td><span class="badge ${log.status === 'Under Repair' ? 'badge-repair' : 'badge-occupied'}">${log.status}</span></td>
-      ${state.currentUserRole === 'admin' ? `<td><button class="btn btn-outline" onclick="resolveFault('${log.id}')">Mark Fixed</button></td>` : ''}
+      ${state.currentUserRole === 'admin' ? `<td><button class="btn btn-outline" id="btn-resolve-${log.id}" onclick="resolveFault('${log.id}')">Mark Fixed</button></td>` : ''}
     </tr>
   `).join('');
 }
 
 function renderSessionTable() {
+  if (!sessionTableBody) return;
   sessionTableBody.innerHTML = state.sessions.map(ses => `
     <tr>
       <td><strong>${ses.id}</strong></td>
       <td>${ses.student}</td>
       <td>${ses.system}</td>
-      <td>${ses.checkIn}</td>
-      <td>${ses.checkOut}</td>
+      <td>${ses.checkIn || ses.check_in}</td>
+      <td>${ses.checkOut || ses.check_out}</td>
       <td>${ses.duration}</td>
     </tr>
   `).join('');
 }
 
 function populateFaultSelectOptions() {
+  if (!faultSystemSelect) return;
   faultSystemSelect.innerHTML = state.workstations.map(pc => `<option value="${pc.id}">${pc.id} (${pc.status})</option>`).join('');
 }
 
-// --- Action Handlers ---
-window.assignPC = function(pcId) {
+// --- Supabase-Backed Database Actions ---
+
+// 1. Assign Workstation to User
+window.assignPC = async function(pcId) {
   const user = prompt(`Enter student/user name for ${pcId}:`, 'Student_User');
-  if (user) {
-    const pc = state.workstations.find(w => w.id === pcId);
-    if (pc) {
-      pc.status = 'Occupied';
-      pc.user = user;
-      pc.sessionStart = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      renderAll();
+  if (user && user.trim()) {
+    try {
+      const res = await fetch(`/api/workstations/${pcId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: user.trim() })
+      });
+      if (res.ok) {
+        showToast(`Workstation ${pcId} assigned to ${user.trim()}`, 'success');
+        await fetchAllData();
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Failed to assign workstation', 'error');
+      }
+    } catch (err) {
+      showToast('Network error assigning workstation', 'error');
     }
   }
 };
 
-window.releasePC = function(pcId) {
-  const pc = state.workstations.find(w => w.id === pcId);
-  if (pc) {
-    pc.status = 'Free';
-    pc.user = '-';
-    pc.sessionStart = '-';
-    renderAll();
+// 2. Release Workstation
+window.releasePC = async function(pcId) {
+  try {
+    const res = await fetch(`/api/workstations/${pcId}/release`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      showToast(`Workstation ${pcId} released to Free status`, 'success');
+      await fetchAllData();
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Failed to release workstation', 'error');
+    }
+  } catch (err) {
+    showToast('Network error releasing workstation', 'error');
   }
 };
 
-window.resolveFault = function(logId) {
-  const logIndex = state.maintenanceLogs.findIndex(l => l.id === logId);
-  if (logIndex !== -1) {
-    const log = state.maintenanceLogs[logIndex];
-    const pc = state.workstations.find(w => w.id === log.pcId);
-    if (pc) { pc.status = 'Free'; }
-    
-    state.maintenanceLogs.splice(logIndex, 1);
-    renderAll();
+// 3. Resolve Hardware Fault Ticket
+window.resolveFault = async function(logId) {
+  try {
+    const res = await fetch(`/api/maintenance/${logId}/resolve`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      showToast(`Maintenance Ticket ${logId} marked as fixed & resolved`, 'success');
+      await fetchAllData();
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Failed to resolve maintenance log', 'error');
+    }
+  } catch (err) {
+    showToast('Network error resolving fault ticket', 'error');
   }
 };
 
-// --- Check-In / Check-Out Toggle ---
+// --- Check-In / Check-Out Toggle (Attendance FR-05) ---
 function initSessionToggle() {
-  sessionToggleBtn.addEventListener('click', () => {
-    state.activeSession = !state.activeSession;
-    if (state.activeSession) {
-      sessionToggleBtn.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> Check-Out Session`;
-      sessionToggleBtn.classList.replace('btn-outline', 'btn-warning');
-
-      const freePC = state.workstations.find(w => w.status === 'Free');
-      if (freePC) {
-        freePC.status = 'Occupied';
-        freePC.user = state.currentUserProfile.name;
-        freePC.sessionStart = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        state.sessions.unshift({
-          id: `SES-${Math.floor(500 + Math.random() * 100)}`,
-          student: state.currentUserProfile.name,
-          system: freePC.id,
-          checkIn: freePC.sessionStart,
-          checkOut: 'Active',
-          duration: '-'
+  if (!sessionToggleBtn) return;
+  sessionToggleBtn.addEventListener('click', async () => {
+    if (!state.activeSession) {
+      // Check-In
+      try {
+        const res = await fetch('/api/sessions/checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentName: state.currentUserProfile.name })
         });
+        if (res.ok) {
+          const result = await res.json();
+          state.activeSession = true;
+          sessionToggleBtn.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> Check-Out Session`;
+          sessionToggleBtn.classList.replace('btn-outline', 'btn-warning');
+          showToast(`Checked in! Assigned to ${result.workstation}`, 'success');
+          await fetchAllData();
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to check-in to lab session', 'error');
+        }
+      } catch (err) {
+        showToast('Network error during session check-in', 'error');
       }
     } else {
-      sessionToggleBtn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Check-In Session`;
-      sessionToggleBtn.classList.replace('btn-warning', 'btn-outline');
-
-      const userSession = state.workstations.find(w => w.user === state.currentUserProfile.name);
-      if (userSession) {
-        userSession.status = 'Free';
-        userSession.user = '-';
-        userSession.sessionStart = '-';
-      }
-
-      const activeSes = state.sessions.find(s => s.student === state.currentUserProfile.name && s.checkOut === 'Active');
-      if (activeSes) {
-        activeSes.checkOut = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        activeSes.duration = 'Completed';
+      // Check-Out
+      try {
+        const res = await fetch('/api/sessions/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentName: state.currentUserProfile.name })
+        });
+        if (res.ok) {
+          state.activeSession = false;
+          sessionToggleBtn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Check-In Session`;
+          sessionToggleBtn.classList.replace('btn-warning', 'btn-outline');
+          showToast('Checked out! Lab workstation released.', 'info');
+          await fetchAllData();
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to check-out session', 'error');
+        }
+      } catch (err) {
+        showToast('Network error during session check-out', 'error');
       }
     }
-    renderAll();
   });
 }
 
 // --- Filters & Printing ---
 function initFilters() {
-  pcSearchInput.addEventListener('input', renderAllocationTable);
-  pcStatusFilter.addEventListener('change', renderAllocationTable);
+  if (pcSearchInput) pcSearchInput.addEventListener('input', renderAllocationTable);
+  if (pcStatusFilter) pcStatusFilter.addEventListener('change', renderAllocationTable);
   
   if (printReportBtn) {
     printReportBtn.addEventListener('click', () => {
@@ -387,6 +489,7 @@ function initFilters() {
 
 // --- Auth Modal & Dynamic Profile Switcher ---
 function initAuthTabSystem() {
+  if (!tabLoginBtn || !tabSignupBtn) return;
   tabLoginBtn.addEventListener('click', () => {
     tabLoginBtn.classList.add('active');
     tabSignupBtn.classList.remove('active');
@@ -404,15 +507,21 @@ function initAuthTabSystem() {
 
 // --- Modal Handlers ---
 function initModals() {
-  openBookingBtn.addEventListener('click', () => bookingModal.classList.add('active'));
-  openFaultBtn.addEventListener('click', () => faultModal.classList.add('active'));
-  openAuthBtn.addEventListener('click', () => authModal.classList.add('active'));
+  if (openBookingBtn && bookingModal) {
+    openBookingBtn.addEventListener('click', () => bookingModal.classList.add('active'));
+  }
+  if (openFaultBtn && faultModal) {
+    openFaultBtn.addEventListener('click', () => faultModal.classList.add('active'));
+  }
+  if (openAuthBtn && authModal) {
+    openAuthBtn.addEventListener('click', () => authModal.classList.add('active'));
+  }
 
   closeModals.forEach(btn => {
     btn.addEventListener('click', () => {
-      bookingModal.classList.remove('active');
-      faultModal.classList.remove('active');
-      authModal.classList.remove('active');
+      if (bookingModal) bookingModal.classList.remove('active');
+      if (faultModal) faultModal.classList.remove('active');
+      if (authModal) authModal.classList.remove('active');
     });
   });
 
@@ -425,88 +534,146 @@ function initModals() {
 
 // --- Form Handlers ---
 function initForms() {
-  // Login Form Submission
-  loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const nameFromEmail = email.split('@')[0].replace('.', ' ');
-    const formattedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+  // 1. User Login (FR-01)
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
 
-    state.currentUserProfile.name = formattedName;
-    state.currentUserProfile.email = email;
-    state.currentUserProfile.avatar = formattedName.substring(0, 2).toUpperCase();
-    
-    updateUserProfileDisplay();
-    authModal.classList.remove('active');
-    loginForm.reset();
-    renderAll();
-  });
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        if (res.ok) {
+          const user = await res.json();
+          state.currentUserProfile.name = user.name;
+          state.currentUserProfile.email = user.email;
+          state.currentUserProfile.role = user.roleTitle || (user.role === 'admin' ? 'Administrator' : 'Student User');
+          state.currentUserProfile.avatar = user.avatar;
+          state.currentUserRole = user.role;
+          if (roleSelect) roleSelect.value = user.role;
 
-  // Signup Form Submission
-  signupForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('signup-name').value;
-    const email = document.getElementById('signup-email').value;
-    const role = document.getElementById('signup-role').value;
-
-    state.currentUserRole = role;
-    roleSelect.value = role;
-    
-    state.currentUserProfile.name = name;
-    state.currentUserProfile.email = email;
-    state.currentUserProfile.role = role === 'admin' ? 'Administrator' : 'Student User';
-    state.currentUserProfile.avatar = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-
-    updateUserProfileDisplay();
-    authModal.classList.remove('active');
-    signupForm.reset();
-    renderAll();
-  });
-
-  // Booking Form Submission
-  bookingForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const date = document.getElementById('book-date').value;
-    const time = document.getElementById('book-time').value;
-    const purpose = document.getElementById('book-purpose').value;
-
-    state.schedules.push({
-      id: `SLOT-${100 + state.schedules.length + 1}`,
-      date,
-      time,
-      purpose,
-      bookedBy: state.currentUserProfile.name,
-      status: 'Confirmed'
+          updateUserProfileDisplay();
+          authModal.classList.remove('active');
+          loginForm.reset();
+          showToast(`Welcome back, ${user.name}!`, 'success');
+          renderAll();
+        } else {
+          showToast('Invalid credentials provided', 'error');
+        }
+      } catch (err) {
+        showToast('Login network error', 'error');
+      }
     });
+  }
 
-    bookingForm.reset();
-    bookingModal.classList.remove('active');
-    renderAll();
-  });
+  // 2. User Registration (FR-01)
+  if (signupForm) {
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('signup-name').value;
+      const email = document.getElementById('signup-email').value;
+      const role = document.getElementById('signup-role').value;
+      const password = document.getElementById('signup-password').value;
 
-  // Fault Ticket Form Submission
-  faultForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const pcId = faultSystemSelect.value;
-    const component = document.getElementById('fault-component').value;
-    const desc = document.getElementById('fault-desc').value;
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, role, password })
+        });
+        if (res.ok) {
+          const user = await res.json();
+          state.currentUserRole = user.role;
+          if (roleSelect) roleSelect.value = user.role;
+          
+          state.currentUserProfile.name = user.name;
+          state.currentUserProfile.email = user.email;
+          state.currentUserProfile.role = user.roleTitle;
+          state.currentUserProfile.avatar = user.avatar;
 
-    state.maintenanceLogs.push({
-      id: `M-0${state.maintenanceLogs.length + 1}`,
-      pcId,
-      component,
-      desc,
-      date: new Date().toISOString().split('T')[0],
-      status: 'Under Repair'
+          updateUserProfileDisplay();
+          authModal.classList.remove('active');
+          signupForm.reset();
+          showToast(`Account registered in Supabase: ${user.name}`, 'success');
+          renderAll();
+        } else {
+          showToast('Failed to create account', 'error');
+        }
+      } catch (err) {
+        showToast('Signup network error', 'error');
+      }
     });
+  }
 
-    const pc = state.workstations.find(w => w.id === pcId);
-    if (pc) {
-      pc.status = 'Under Repair';
-    }
+  // 3. Timetable Reservation (FR-04)
+  if (bookingForm) {
+    bookingForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const date = document.getElementById('book-date').value;
+      const time = document.getElementById('book-time').value;
+      const purpose = document.getElementById('book-purpose').value;
 
-    faultForm.reset();
-    faultModal.classList.remove('active');
-    renderAll();
-  });
+      try {
+        const res = await fetch('/api/schedules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date,
+            time,
+            purpose,
+            bookedBy: state.currentUserProfile.name
+          })
+        });
+
+        if (res.ok) {
+          bookingForm.reset();
+          bookingModal.classList.remove('active');
+          showToast('Lab slot reservation saved to database', 'success');
+          await fetchAllData();
+        } else {
+          showToast('Failed to reserve lab slot', 'error');
+        }
+      } catch (err) {
+        showToast('Network error during reservation', 'error');
+      }
+    });
+  }
+
+  // 4. Fault Ticket Logging (FR-03)
+  if (faultForm) {
+    faultForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pcId = faultSystemSelect.value;
+      const component = document.getElementById('fault-component').value;
+      const desc = document.getElementById('fault-desc').value;
+
+      try {
+        const res = await fetch('/api/maintenance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pcId,
+            component,
+            desc,
+            date: new Date().toISOString().split('T')[0]
+          })
+        });
+
+        if (res.ok) {
+          faultForm.reset();
+          faultModal.classList.remove('active');
+          showToast(`Maintenance fault logged for ${pcId} (marked Under Repair)`, 'warning');
+          await fetchAllData();
+        } else {
+          showToast('Failed to log maintenance ticket', 'error');
+        }
+      } catch (err) {
+        showToast('Network error logging fault', 'error');
+      }
+    });
+  }
 }
